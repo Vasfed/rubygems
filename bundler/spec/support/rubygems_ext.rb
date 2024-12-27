@@ -151,8 +151,14 @@ module Spec
       end
 
       # We don't use `Open3` here because it does not work on JRuby + Windows
-      output = `#{Gem.ruby} #{File.expand_path("support/bundle.rb", Path.spec_dir)} install`
-      raise output unless $?.success?
+      cmd = "#{Gem.ruby} #{File.expand_path("support/bundle.rb", Path.spec_dir)} install"
+      if $stdout.tty?
+        puts "Running `#{cmd}`:"
+        system(cmd) || raise("Failed to install")
+      else
+        output = `#{cmd}`
+        raise output unless $?.success?
+      end
     ensure
       if path
         ENV["BUNDLE_PATH"] = old_path
