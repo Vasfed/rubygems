@@ -90,7 +90,7 @@ module Bundler
 
       # Path where the global index file is stored
       def global_index_file
-        Plugin.global_root.join("index")
+        Plugin.global_root&.join("index")
       end
 
       # Path where the local index file is stored

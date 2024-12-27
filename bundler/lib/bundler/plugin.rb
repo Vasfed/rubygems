@@ -148,7 +148,7 @@ module Bundler
 
     # The global directory root for all plugin related data
     def global_root
-      Bundler.user_bundle_path("plugin")
+      Bundler.user_bundle_path("plugin", writable: false)
     end
 
     # The cache directory for plugin stuffs

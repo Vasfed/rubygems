@@ -260,7 +260,7 @@ module Bundler
       "#{Bundler.rubygems.ruby_engine}/#{RbConfig::CONFIG["ruby_version"]}"
     end
 
-    def user_home
+    def user_home(writable: true)
       @user_home ||= begin
         home = Bundler.rubygems.user_home
         bundle_home = home ? File.join(home, ".bundle") : nil
@@ -274,6 +274,8 @@ module Bundler
         end
 
         if warning
+          return unless writable
+
           Bundler.ui.warn "#{warning}\n"
           user_home = tmp_home_path
           Bundler.ui.warn "Bundler will use `#{user_home}' as your home directory temporarily.\n"
@@ -284,22 +286,22 @@ module Bundler
       end
     end
 
-    def user_bundle_path(dir = "home")
+    def user_bundle_path(dir = "home", writable: true)
       env_var, fallback = case dir
                           when "home"
-                            ["BUNDLE_USER_HOME", proc { Pathname.new(user_home).join(".bundle") }]
+                            ["BUNDLE_USER_HOME", proc { user_home(writable:)&.join(".bundle") }]
                           when "cache"
-                            ["BUNDLE_USER_CACHE", proc { user_bundle_path.join("cache") }]
+                            ["BUNDLE_USER_CACHE", proc { user_bundle_path(writable:)&.join("cache") }]
                           when "config"
-                            ["BUNDLE_USER_CONFIG", proc { user_bundle_path.join("config") }]
+                            ["BUNDLE_USER_CONFIG", proc { user_bundle_path(writable:)&.join("config") }]
                           when "plugin"
-                            ["BUNDLE_USER_PLUGIN", proc { user_bundle_path.join("plugin") }]
+                            ["BUNDLE_USER_PLUGIN", proc { user_bundle_path(writable:)&.join("plugin") }]
                           else
                             raise BundlerError, "Unknown user path requested: #{dir}"
       end
       # `fallback` will already be a Pathname, but Pathname.new() is
       # idempotent so it's OK
-      Pathname.new(ENV.fetch(env_var, &fallback))
+      ENV.fetch(env_var, &fallback)&.then { Pathname.new(_1) }
     end
 
     def user_cache
